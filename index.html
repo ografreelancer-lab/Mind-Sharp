@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mind Sharp Chess</title>
+
+  <style>
+    :root {
+      --dark: #1d130e;
+      --brown: #5c3523;
+      --board-light: #f4d9b5;
+      --board-dark: #9a6246;
+      --gold: #f2bb63;
+      --green: #49b979;
+      --text: #39251c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, #fff5e8 0, transparent 34%),
+        linear-gradient(135deg, #ead6bd, #cfac8c);
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .app {
+      width: min(100%, 1050px);
+      margin: 0 auto;
+      padding: 24px;
+      border: 1px solid rgba(91, 53, 35, 0.18);
+      border-radius: 25px;
+      background: rgba(255, 250, 243, 0.78);
+      box-shadow: 0 24px 65px rgba(77, 42, 24, 0.2);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 25px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: #fff6e9;
+      background: linear-gradient(135deg, #3d2116, #865039);
+      font-size: 27px;
+      box-shadow: 0 8px 16px rgba(60, 32, 20, 0.2);
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--dark);
+      font-size: clamp(22px, 4vw, 31px);
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: #805c4b;
+      font-size: 13px;
+    }
+
+    .new-game {
+      border: 0;
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: #fffaf3;
+      background: var(--brown);
+      font: inherit;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .new-game:hover {
+      background: #3f2317;
+    }
+
+    .game-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 270px;
+      gap: 25px;
+      align-items: start;
+    }
+
+    .board-wrap {
+      width: min(100%, 680px);
+      margin: 0 auto;
+    }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      overflow: hidden;
+      border: 12px solid var(--brown);
+      border-radius: 7px;
+      box-shadow: 0 18px 35px rgba(67, 37, 24, 0.25);
+    }
+
+    .square {
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      cursor: pointer;
+      font-size: clamp(25px, 7.2vw, 58px);
+      line-height: 1;
+      user-select: none;
+    }
+
+    .light {
+      background: var(--board-light);
+    }
+
+    .dark {
+      background: var(--board-dark);
+    }
+
+    .square.selected {
+      outline: 4px solid rgba(255, 210, 93, 0.9);
+      outline-offset: -4px;
+      z-index: 1;
+    }
+
+    .square.legal::after {
+      width: 18%;
+      aspect-ratio: 1;
+      position: absolute;
+      content: "";
+      border-radius: 50%;
+      background: rgba(37, 91, 57, 0.62);
+    }
+
+    .square.capture::after {
+      width: 80%;
+      height: 80%;
+      position: absolute;
+      content: "";
+      border: 4px solid rgba(104, 37, 28, 0.76);
+      border-radius: 50%;
+    }
+
+    .piece {
+      position: relative;
+      z-index: 1;
+      filter: drop-shadow(0 2px 1px rgba(0, 0, 0, 0.28));
+    }
+
+    .white-piece {
+      color: #fffaf0;
+      text-shadow: 0 1px 0 #3d241a, 1px 0 0 #3d241a, -1px 0 0 #3d241a, 0 -1px 0 #3d241a;
+    }
+
+    .black-piece {
+      color: #2b1a15;
+      text-shadow: 0 1px 0 #c28b68;
+    }
+
+    .side-panel {
+      padding: 20px;
+      border: 1px solid #ead6c0;
+      border-radius: 16px;
+      background: rgba(255, 253, 249, 0.74);
+    }
+
+    .turn-card {
+      padding: 15px;
+      border-radius: 12px;
+      color: #fffaf4;
+      background: linear-gradient(135deg, #3e2418, #70452f);
+    }
+
+    .turn-card small,
+    .turn-card strong {
+      display: block;
+    }
+
+    .turn-card small {
+      color: #e9c8aa;
+      font-size: 11px;
+      font-weight: bold;
+      letter-spacing: 1px;
+    }
+
+    .turn-card strong {
+      margin-top: 6px;
+      font-size: 21px;
+    }
+
+    .status {
+      min-height: 50px;
+      margin: 16px 0;
+      padding: 12px;
+      border-left: 4px solid var(--gold);
+      border-radius: 6px;
+      color: #684b3d;
+      background: #fff4e6;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .panel-title {
+      margin: 21px 0 10px;
+      color: #553424;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+
+    .moves {
+      min-height: 115px;
+      max-height: 235px;
+      overflow-y: auto;
+      padding: 10px;
+      border: 1px solid #ead9c8;
+      border-radius: 10px;
+      background: #fffdf9;
+      color: #6e5041;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .moves:empty::before {
+      content: "No moves yet.";
+      color: #ad9383;
+    }
+
+    .panel-buttons {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 17px;
+    }
+
+    .panel-buttons button {
+      border: 1px solid #d8bda7;
+      border-radius: 9px;
+      padding: 11px 9px;
+      color: #563525;
+      background: #fffaf4;
+      font: inherit;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .panel-buttons button:hover {
+      background: #f5e1cd;
+    }
+
+    .help {
+      margin: 19px 0 0;
+      color: #8a6b5b;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .promotion-box {
+      position: fixed;
+      z-index: 5;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(30, 18, 12, 0.58);
+    }
+
+    .promotion-box.show {
+      display: flex;
+    }
+
+    .promotion-card {
+      width: min(100%, 360px);
+      padding: 22px;
+      border-radius: 18px;
+      color: #4d2d1d;
+      text-align: center;
+      background: #fffaf2;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.24);
+    }
+
+    .promotion-card h2 {
+      margin: 0 0 7px;
+    }
+
+    .promotion-card p {
+      margin: 0 0 17px;
+      color: #866454;
+      font-size: 14px;
+    }
+
+    .promotion-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .promotion-options button {
+      border: 1px solid #e2c4aa;
+      border-radius: 10px;
+      padding: 10px 4px;
+      color: #50301f;
+      background: #fff3e6;
+      font-size: 34px;
+      cursor: pointer;
+    }
+
+    @media (max-width: 800px) {
+      .game-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .side-panel {
+        width: min(100%, 680px);
+        margin: 0 auto;
+      }
+
+      .moves {
+        max-height: 135px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      body {
+        padding: 9px;
+      }
+
+      .app {
+        padding: 14px;
+        border-radius: 17px;
+      }
+
+      header {
+        align-items: flex-start;
+      }
+
+      .brand p {
+        display: none;
+      }
+
+      .new-game {
+        padding: 10px 11px;
+        font-size: 12px;
+      }
+
+      .board {
+        border-width: 7px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="app">
+    <header>
+      <div class="brand">
+        <div class="brand-icon">♞</div>
+        <div>
+          <h1>Mind Sharp Chess</h1>
+          <p>Two-player chess. Train your mind.</p>
+        </div>
+      </div>
+
+      <button class="new-game" id="newGameButton" type="button">New Game</button>
+    </header>
+
+    <section class="game-layout">
+      <div class="board-wrap">
+        <div class="board" id="board" aria-label="Chess board"></div>
+      </div>
+
+      <aside class="side-panel">
+        <div class="turn-card">
+          <small>CURRENT TURN</small>
+          <strong id="turnText">White to move</strong>
+        </div>
+
+        <div class="status" id="statusText">
+          Select a piece, then select a highlighted square to move.
+        </div>
+
+        <h2 class="panel-title">Move History</h2>
+        <div class="moves" id="moveHistory"></div>
+
+        <div class="panel-buttons">
+          <button id="undoButton" type="button">↶ Undo move</button>
+          <button id="flipButton" type="button">↕ Flip board</button>
+        </div>
+
+        <p class="help">
+          Click a piece to see legal moves. This game supports castling,
+          en passant, pawn promotion, check, checkmate, and stalemate.
+        </p>
+      </aside>
+    </section>
+  </main>
+
+  <div class="promotion-box" id="promotionBox">
+    <div class="promotion-card">
+      <h2>Promote your pawn</h2>
+      <p>Choose a new piece.</p>
+      <div class="promotion-options" id="promotionOptions"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.11.0/chess.min.js"></script>
+
+  <script>
+    const boardElement = document.getElementById("board");
+    const turnText = document.getElementById("turnText");
+    const statusText = document.getElementById("statusText");
+    const moveHistory = document.getElementById("moveHistory");
+    const newGameButton = document.getElementById("newGameButton");
+    const undoButton = document.getElementById("undoButton");
+    const flipButton = document.getElementById("flipButton");
+    const promotionBox = document.getElementById("promotionBox");
+    const promotionOptions = document.getElementById("promotionOptions");
+
+    const game = new Chess();
+    const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
+
+    const unicodePieces = {
+      w: { p: "♙", n: "♘", b: "♗", r: "♖", q: "♕", k: "♔" },
+      b: { p: "♟", n: "♞", b: "♝", r: "♜", q: "♛", k: "♚" }
+    };
+
+    let selectedSquare = null;
+    let legalMoves = [];
+    let boardFlipped = false;
+    let promotionMove = null;
+
+    function renderBoard() {
+      boardElement.innerHTML = "";
+
+      const rows =
